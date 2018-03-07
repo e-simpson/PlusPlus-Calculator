@@ -14,7 +14,8 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginStart="10dp"
         android:background="@color/transparent"
         android:orientation="horizontal"
         android:layout_gravity="center"
@@ -25,7 +26,6 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/infix"
-            android:layout_margin="10dp"
             android:textSize="20sp"
             android:textColor="@color/red"
             style="?android:attr/borderlessButtonStyle"/>
@@ -63,7 +63,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_gravity="end"
-                android:layout_weight="1"
+                android:layout_weight="0.6"
                 android:padding="0dp"
                 android:paddingBottom="18dp"
                 android:overScrollMode="never"
@@ -71,7 +71,7 @@
                 android:scrollbarThumbVertical="@color/colorAccent"
                 android:background="@color/transparent"
                 android:scrollbars="none"
-                android:visibility="visible">
+                android:visibility="invisible">
 
                 <android.support.v7.widget.AppCompatTextView
                     android:id="@+id/expression"
@@ -98,7 +98,7 @@
                 android:textAlignment="viewEnd"
                 android:textColor="@color/colorAccentLight"
                 android:text="@string/_0"
-                android:textSize="30sp"
+                android:textSize="33sp"
                 tools:ignore="RtlCompat"
                 android:background="@color/transparent" />
 
@@ -122,7 +122,7 @@
                     android:layout_height="match_parent"
                     android:layout_marginBottom="10dp"
                     android:ellipsize="end"
-                    android:paddingEnd="23dp"
+                    android:paddingEnd="20dp"
 
                     android:paddingStart="23dp"
                     android:scrollHorizontally="true"
@@ -132,7 +132,7 @@
                     android:textAlignment="textEnd"
                     android:textColor="@color/colorAccent"
                     android:includeFontPadding="false"
-                    android:textSize="100sp"
+                    android:textSize="110sp"
 
                     tools:ignore="RtlSymmetry"
                     android:background="@color/transparent"/>
@@ -170,7 +170,8 @@
                         android:layout_weight="1"
                         android:background="@drawable/ripple"
                         android:text="@string/_7"
-                        android:textSize="35sp"/>
+                        android:textSize="47sp"
+                        android:fontFamily="sans-serif"/>
 
                     <android.support.v7.widget.AppCompatButton
                         android:id="@+id/b8"
@@ -179,7 +180,8 @@
                         android:layout_weight="1"
                         android:background="@drawable/ripple"
                         android:text="@string/_8"
-                        android:textSize="35sp" />
+                        android:textSize="47sp"
+                        android:fontFamily="sans-serif"/>
 
                     <android.support.v7.widget.AppCompatButton
                         android:id="@+id/b9"
@@ -188,7 +190,8 @@
                         android:layout_weight="1"
                         android:background="@drawable/ripple"
                         android:text="@string/_9"
-                        android:textSize="35sp" />
+                        android:textSize="47sp"
+                        android:fontFamily="sans-serif"/>
 
                 </android.support.v7.widget.LinearLayoutCompat>
 
@@ -206,7 +209,8 @@
                         android:layout_weight="1"
                         android:background="@drawable/ripple"
                         android:text="@string/_4"
-                        android:textSize="35sp" />
+                        android:textSize="47sp"
+                        android:fontFamily="sans-serif"/>
 
                     <android.support.v7.widget.AppCompatButton
                         android:id="@+id/b5"
@@ -215,7 +219,8 @@
                         android:layout_weight="1"
                         android:background="@drawable/ripple"
                         android:text="@string/_5"
-                        android:textSize="35sp" />
+                        android:textSize="47sp"
+                        android:fontFamily="sans-serif"/>
 
                     <android.support.v7.widget.AppCompatButton
                         android:id="@+id/b6"
@@ -224,7 +229,8 @@
                         android:layout_weight="1"
                         android:background="@drawable/ripple"
                         android:text="@string/_6"
-                        android:textSize="35sp" />
+                        android:textSize="47sp"
+                        android:fontFamily="sans-serif"/>
 
                 </android.support.v7.widget.LinearLayoutCompat>
 
@@ -242,7 +248,8 @@
                         android:layout_weight="1"
                         android:background="@drawable/ripple"
                         android:text="@string/_1"
-                        android:textSize="35sp" />
+                        android:textSize="47sp"
+                        android:fontFamily="sans-serif"/>
 
                     <android.support.v7.widget.AppCompatButton
                         android:id="@+id/b2"
@@ -251,7 +258,8 @@
                         android:layout_weight="1"
                         android:background="@drawable/ripple"
                         android:text="@string/_2"
-                        android:textSize="35sp" />
+                        android:textSize="47sp"
+                        android:fontFamily="sans-serif"/>
 
                     <android.support.v7.widget.AppCompatButton
                         android:id="@+id/b3"
@@ -260,7 +268,8 @@
                         android:layout_weight="1"
                         android:background="@drawable/ripple"
                         android:text="@string/_3"
-                        android:textSize="35sp" />
+                        android:textSize="47sp"
+                        android:fontFamily="sans-serif"/>
 
                 </android.support.v7.widget.LinearLayoutCompat>
 
@@ -272,22 +281,24 @@
                     android:weightSum="3">
 
                     <android.support.v7.widget.AppCompatButton
-                        android:id="@+id/bDecimal"
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1"
-                        android:background="@drawable/ripple"
-                        android:text="@string/decimal"
-                        android:textSize="35sp" />
-
-                    <android.support.v7.widget.AppCompatButton
                         android:id="@+id/b0"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="1"
                         android:background="@drawable/ripple"
                         android:text="@string/_0"
-                        android:textSize="35sp" />
+                        android:textSize="47sp"
+                        android:fontFamily="sans-serif"/>
+
+                    <android.support.v7.widget.AppCompatButton
+                        android:id="@+id/bDecimal"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:background="@drawable/ripple"
+                        android:text="@string/decimal"
+                        android:textSize="47sp"
+                        android:fontFamily="sans-serif"/>
 
                     <android.support.v7.widget.AppCompatButton
                         android:id="@+id/bEqual"
@@ -328,6 +339,7 @@
                     android:layout_weight="1"
                     android:background="@drawable/ripple"
                     android:text="@string/clear"
+                    android:textStyle="bold"
                     android:textSize="24sp" />
 
                 <android.support.v7.widget.AppCompatButton

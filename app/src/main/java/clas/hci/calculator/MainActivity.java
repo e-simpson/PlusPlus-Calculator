@@ -254,7 +254,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
 //    number buttons
-    @OnClick(R.id.b0) void press0() {pressNumber(1);}
+    @OnClick(R.id.b0) void press0() {pressNumber(0);}
     @OnClick(R.id.b1) void press1() {pressNumber(1);}
     @OnClick(R.id.b2) void press2() {pressNumber(2);}
     @OnClick(R.id.b3) void press3() {pressNumber(3);}
