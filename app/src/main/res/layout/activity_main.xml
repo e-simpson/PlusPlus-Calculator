@@ -56,14 +56,15 @@
             android:background="?android:textColorTertiary"
             android:elevation="10dp"
             android:orientation="vertical"
-            tools:ignore="RtlSymmetry">
+            tools:ignore="RtlSymmetry,UnusedAttribute">
 
             <ScrollView
                 android:id="@+id/expressionScroll"
-                android:layout_width="280dp"
+                android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_gravity="end"
                 android:layout_weight="1"
+                android:padding="0dp"
                 android:paddingBottom="18dp"
                 android:overScrollMode="never"
                 android:scrollbarSize="2dp"
@@ -77,14 +78,14 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="bottom"
+                    android:layout_gravity="bottom"
                     android:paddingEnd="23dp"
-                    android:text="\n\n"
                     android:textAlignment="viewEnd"
+                    android:text="@string/_0"
                     android:textColor="@color/colorAccentLighter"
                     android:textSize="20sp"
                     tools:ignore="RtlCompat"
                     android:background="@color/transparent"/>
-
             </ScrollView>
 
             <android.support.v7.widget.AppCompatTextView
@@ -96,15 +97,16 @@
                 android:singleLine="true"
                 android:textAlignment="viewEnd"
                 android:textColor="@color/colorAccentLight"
+                android:text="@string/_0"
                 android:textSize="30sp"
                 tools:ignore="RtlCompat"
-                android:background="@color/transparent"/>
-
+                android:background="@color/transparent" />
 
             <HorizontalScrollView
                 android:id="@+id/inputScroll"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_height="0dp"
+                android:layout_weight="1"
                 android:layout_gravity="end"
                 android:clickable="false"
                 android:foreground="@drawable/input_ripple"
@@ -126,7 +128,7 @@
                     android:scrollHorizontally="true"
                     android:singleLine="true"
 
-                    android:text="0"
+                    android:text="@string/_0"
                     android:textAlignment="textEnd"
                     android:textColor="@color/colorAccent"
                     android:includeFontPadding="false"
@@ -315,7 +317,8 @@
                 android:background="?android:textColorSecondary"
                 android:orientation="vertical"
                 android:paddingTop="10dp"
-                android:elevation="10dp">
+                android:elevation="10dp"
+                tools:ignore="UnusedAttribute">
 
 
                 <android.support.v7.widget.AppCompatButton

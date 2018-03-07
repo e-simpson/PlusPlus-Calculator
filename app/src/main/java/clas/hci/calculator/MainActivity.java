@@ -306,11 +306,12 @@ public class MainActivity extends AppCompatActivity {
 //    MAIN OVERRIDES FUNCTION------------------------------------------------
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setTheme();
+        applyTheme();
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
         updateDisplay();
         checkSetCustomTheme();
+        checkSetLightSystemBars();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             getWindow().setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
@@ -326,6 +327,42 @@ public class MainActivity extends AppCompatActivity {
         int themeID = preferences.getInt("THEME", THEME.BLACK.ordinal());
         if (themeID == THEME.CUSTOM.ordinal()){
             findViewById(R.id.layout).setBackgroundColor(preferences.getInt("CUSTOM", R.color.black));
+        }
+    }
+
+    private void setLightSystemBars(boolean light){
+        if (light){
+            View someView = findViewById(R.id.layout);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                someView.setSystemUiVisibility(someView.getSystemUiVisibility() | View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+            }
+            if (Build.VERSION.SDK_INT >= 27) {
+                someView.setSystemUiVisibility(someView.getSystemUiVisibility() | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
+            }
+        }
+        else{
+            View someView = findViewById(R.id.layout);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                someView.setSystemUiVisibility(someView.getSystemUiVisibility());
+            }
+            if (Build.VERSION.SDK_INT >= 27) {
+                someView.setSystemUiVisibility(someView.getSystemUiVisibility());
+            }
+        }
+    }
+
+    private void checkSetLightSystemBars(){
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
+        int themeID = preferences.getInt("THEME", THEME.BLACK.ordinal());
+
+        if (themeID == THEME.BLACK.ordinal()){setLightSystemBars(false);}
+        else if (themeID == THEME.WHITE.ordinal()){setLightSystemBars(true);}
+        else if ( themeID == THEME.CUSTOM.ordinal()){
+            int color = preferences.getInt("CUSTOM", R.color.black);
+            double darkness = 1-(0.299*Color.red(color) + 0.587*Color.green(color) + 0.114*Color.blue(color))/255;
+
+            if(darkness<0.5){setLightSystemBars(true);}
+            else{setLightSystemBars(false);}
         }
     }
 
@@ -352,39 +389,33 @@ public class MainActivity extends AppCompatActivity {
         final SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
         int color = preferences.getInt("CUSTOM", Color.argb(255,127,127,127));
 
-        final ColorPicker picker = new ColorPicker(MainActivity.this, Color.alpha(color), Color.red(color), Color.green(color), Color.blue(color));
+        final ColorPicker picker = new ColorPicker(MainActivity.this, Color.red(color), Color.green(color), Color.blue(color));
         picker.setCallback(new ColorPickerCallback() {
             @Override public void onColorChosen(int color) {
-
                 preferences.edit().putInt("THEME", THEME.CUSTOM.ordinal()).apply();
                 preferences.edit().putInt("CUSTOM", color).apply();
-                recreate();
                 picker.hide();
+                recreate();
             }
         });
         picker.show();
         return true;
     }
 
-    private void setTheme(){
+    private void applyTheme(){
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
         int themeID = preferences.getInt("THEME", THEME.BLACK.ordinal());
 
-        if (themeID == THEME.BLACK.ordinal()){
-            super.setTheme(R.style.BlackAppTheme);
-        }
-        else if (themeID == THEME.WHITE.ordinal()){
-            super.setTheme(R.style.WhiteAppTheme);
-        }
+        if (themeID == THEME.BLACK.ordinal()){super.setTheme(R.style.BlackAppTheme);}
+        else if (themeID == THEME.WHITE.ordinal()){super.setTheme(R.style.WhiteAppTheme);}
         else if ( themeID == THEME.CUSTOM.ordinal()){
             int color = preferences.getInt("CUSTOM", R.color.black);
             double darkness = 1-(0.299*Color.red(color) + 0.587*Color.green(color) + 0.114*Color.blue(color))/255;
-            if(darkness<0.5){ super.setTheme(R.style.WhiteAppTheme);}
+
+            if(darkness<0.5){super.setTheme(R.style.WhiteAppTheme);}
             else{super.setTheme(R.style.BlackAppTheme);}
         }
     }
-
-
 
 
 }
