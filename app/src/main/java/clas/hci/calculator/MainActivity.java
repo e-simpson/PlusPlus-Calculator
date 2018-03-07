@@ -1,11 +1,15 @@
 package clas.hci.calculator;
 
+import android.app.ActivityManager;
 import android.content.SharedPreferences;
 import android.content.res.TypedArray;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.v4.graphics.ColorUtils;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.AppCompatButton;
 import android.view.View;
@@ -311,7 +315,6 @@ public class MainActivity extends AppCompatActivity {
         ButterKnife.bind(this);
         updateDisplay();
         checkSetCustomTheme();
-        checkSetLightSystemBars();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             getWindow().setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
@@ -322,14 +325,6 @@ public class MainActivity extends AppCompatActivity {
 
 
 //    THEME SYSTEM-----------------------------------------------------------
-    private void checkSetCustomTheme(){
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
-        int themeID = preferences.getInt("THEME", THEME.BLACK.ordinal());
-        if (themeID == THEME.CUSTOM.ordinal()){
-            findViewById(R.id.layout).setBackgroundColor(preferences.getInt("CUSTOM", R.color.black));
-        }
-    }
-
     private void setLightSystemBars(boolean light){
         if (light){
             View someView = findViewById(R.id.layout);
@@ -351,18 +346,47 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void checkSetLightSystemBars(){
+    private static int mixColors(int color1, int color2, float ratio) {
+        final float inverseRation = 1f - ratio;
+        float r = (Color.red(color1) * ratio) + (Color.red(color2) * inverseRation);
+        float g = (Color.green(color1) * ratio) + (Color.green(color2) * inverseRation);
+        float b = (Color.blue(color1) * ratio) + (Color.blue(color2) * inverseRation);
+        return Color.rgb((int) r, (int) g, (int) b);
+    }
+
+    private void checkSetCustomTheme(){
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
         int themeID = preferences.getInt("THEME", THEME.BLACK.ordinal());
-
-        if (themeID == THEME.BLACK.ordinal()){setLightSystemBars(false);}
-        else if (themeID == THEME.WHITE.ordinal()){setLightSystemBars(true);}
-        else if ( themeID == THEME.CUSTOM.ordinal()){
+        int resultColor = getResources().getColor(R.color.black);
+        if (themeID == THEME.BLACK.ordinal()){
+            setLightSystemBars(false);
+            resultColor = mixColors(getResources().getColor(R.color.black), getResources().getColor(R.color.transLighter), 0.62F);
+        }
+        else if (themeID == THEME.WHITE.ordinal()){
+            setLightSystemBars(true);
+            resultColor = mixColors(getResources().getColor(R.color.white), getResources().getColor(R.color.transDarker), 0.91F);
+        }
+        else if (themeID == THEME.CUSTOM.ordinal()){
             int color = preferences.getInt("CUSTOM", R.color.black);
+            findViewById(R.id.layout).setBackgroundColor(color);
             double darkness = 1-(0.299*Color.red(color) + 0.587*Color.green(color) + 0.114*Color.blue(color))/255;
+            if(darkness<0.5){
+                setLightSystemBars(true);
+                resultColor = mixColors(color, getResources().getColor(R.color.transDarker), 0.91F);
+            }
+            else{
+                setLightSystemBars(false);
+                resultColor = mixColors(color, getResources().getColor(R.color.transLighter), 0.65F);
+            }
+        }
+        setTaskDescription(resultColor);
+    }
 
-            if(darkness<0.5){setLightSystemBars(true);}
-            else{setLightSystemBars(false);}
+    private void setTaskDescription(int color){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            String title = getString(R.string.app_name);
+            Bitmap icon = BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher_round);
+            setTaskDescription(new ActivityManager.TaskDescription(title, icon, color));
         }
     }
 

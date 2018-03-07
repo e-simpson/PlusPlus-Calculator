@@ -7,6 +7,7 @@
         <item name="android:textColorSecondary">@color/transLight</item>
         <item name="android:textColorTertiary">@color/transLighter</item>
 
+        <item name="android:navigationBarColor" tools:targetApi="lollipop">@color/white</item>
         <item name="android:buttonStyle" tools:targetApi="lollipop">@style/DefaultButtonTheme</item>
     </style>
 
