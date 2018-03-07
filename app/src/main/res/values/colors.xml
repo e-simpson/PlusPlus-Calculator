@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorAccent">#147dff</color>
+    <color name="colorAccentLight">#bd147dff</color>
+    <color name="colorAccentLighter">#91147dff</color>
+
+    <!--theme colours-->
+    <color name="black">#000000</color>
+    <color name="white">#ffffff</color>
+
+    <!--ui colours-->
+    <color name="red">#f9373a</color>
+    <color name="green">#b605f177</color>
+    <color name="blue">#378ef9</color>
+
+    <color name="transparent">#00000000</color>
+    <color name="transLight">#3a898989</color>
+    <color name="transLighter">#5e848484</color>
+
+
+    <color name="whiteDark">#18000000</color>
+    <color name="whiteDarker">#26000000</color>
+
+</resources>
