@@ -10,37 +10,6 @@
     android:background="?colorPrimary">
 
 
-    <!--settings top bar overlay-->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:layout_marginStart="10dp"
-        android:background="@color/transparent"
-        android:orientation="horizontal"
-        android:layout_gravity="center"
-        android:gravity="center|start">
-
-        <android.support.v7.widget.AppCompatButton
-            android:id="@+id/bMode"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/infix"
-            android:textSize="20sp"
-            android:textColor="@color/red"
-            style="?android:attr/borderlessButtonStyle"/>
-
-        <android.support.v7.widget.AppCompatImageButton
-            android:id="@+id/bTheme"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="?selectableItemBackgroundBorderless"
-            android:src="@drawable/sun"
-            android:tint="?android:textColor"
-            android:visibility="visible" />
-    </LinearLayout>
-
-
     <!--calculator -->
     <android.support.v7.widget.LinearLayoutCompat
         android:layout_width="match_parent"
@@ -50,49 +19,43 @@
 
         <!--input area-->
         <android.support.v7.widget.LinearLayoutCompat
+            android:id="@+id/inputLayout"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="3"
-            android:background="?android:textColorTertiary"
-            android:elevation="10dp"
+            android:layout_weight="3.05"
+            android:elevation="4dp"
             android:orientation="vertical"
             tools:ignore="RtlSymmetry,UnusedAttribute">
 
             <ScrollView
-                android:id="@+id/expressionScroll"
-                android:layout_width="match_parent"
+                android:id="@+id/historyScroll"
+                android:layout_width="280dp"
                 android:layout_height="0dp"
-                android:layout_gravity="end"
-                android:layout_weight="0.6"
-                android:padding="0dp"
-                android:paddingBottom="18dp"
+                android:layout_gravity="bottom|end"
+                android:layout_weight="1"
+                android:paddingBottom="25dp"
                 android:overScrollMode="never"
                 android:scrollbarSize="2dp"
                 android:scrollbarThumbVertical="@color/colorAccent"
                 android:background="@color/transparent"
-                android:scrollbars="none"
-                android:visibility="invisible">
+                android:scrollbars="vertical"
+                android:visibility="visible">
 
-                <android.support.v7.widget.AppCompatTextView
-                    android:id="@+id/expression"
-                    android:layout_width="match_parent"
+                <android.support.v7.widget.LinearLayoutCompat
+                    android:id="@+id/historyLayout"
+                    android:orientation="vertical"
+                    android:paddingLeft="13dp"
+                    android:paddingRight="13dp"
                     android:layout_height="wrap_content"
-                    android:gravity="bottom"
-                    android:layout_gravity="bottom"
-                    android:paddingEnd="23dp"
-                    android:textAlignment="viewEnd"
-                    android:text="@string/_0"
-                    android:textColor="@color/colorAccentLighter"
-                    android:textSize="20sp"
-                    tools:ignore="RtlCompat"
-                    android:background="@color/transparent"/>
+                    android:layout_width="match_parent"/>
             </ScrollView>
 
             <android.support.v7.widget.AppCompatTextView
-                android:id="@+id/preExpression"
+                android:id="@+id/expression"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="bottom"
+                android:layout_marginBottom="-20dp"
                 android:paddingEnd="23dp"
                 android:singleLine="true"
                 android:textAlignment="viewEnd"
@@ -105,13 +68,13 @@
             <HorizontalScrollView
                 android:id="@+id/inputScroll"
                 android:layout_width="wrap_content"
-                android:layout_height="0dp"
-                android:layout_weight="1"
+                android:layout_height="wrap_content"
                 android:layout_gravity="end"
                 android:clickable="false"
                 android:foreground="@drawable/input_ripple"
                 android:overScrollMode="never"
                 android:scrollbarSize="3dp"
+                android:paddingBottom="10dp"
                 android:includeFontPadding="false"
                 android:scrollbarThumbHorizontal="@color/colorAccent"
                 android:background="@color/transparent">
@@ -120,11 +83,10 @@
                     android:id="@+id/input"
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
-                    android:layout_marginBottom="10dp"
                     android:ellipsize="end"
                     android:paddingEnd="20dp"
+                    android:paddingStart="20dp"
 
-                    android:paddingStart="23dp"
                     android:scrollHorizontally="true"
                     android:singleLine="true"
 
@@ -141,6 +103,48 @@
 
         </android.support.v7.widget.LinearLayoutCompat>
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:weightSum="4"
+            android:background="@color/colorAccent"
+            android:elevation="3dp"
+            tools:ignore="UnusedAttribute"
+            android:visibility="gone">
+
+            <android.support.v7.widget.AppCompatButton
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="@string/save"
+                android:textSize="15sp"
+                style="?android:attr/borderlessButtonStyle"
+                android:textColor="@color/transDarker"/>
+            <android.support.v7.widget.AppCompatButton
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="@string/save"
+                android:textSize="15sp"
+                style="?android:attr/borderlessButtonStyle"
+                android:textColor="@color/transDarker"/>
+            <android.support.v7.widget.AppCompatButton
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="@string/save"
+                android:textSize="15sp"
+                style="?android:attr/borderlessButtonStyle"
+                android:textColor="@color/transDarker"/>
+            <android.support.v7.widget.AppCompatButton
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="@string/save"
+                android:textSize="15sp"
+                style="?android:attr/borderlessButtonStyle"
+                android:textColor="@color/transDarker"/>
+        </LinearLayout>
 
         <!--button area-->
         <android.support.v7.widget.LinearLayoutCompat
@@ -322,13 +326,13 @@
             </android.support.v7.widget.LinearLayoutCompat>
 
             <android.support.v7.widget.LinearLayoutCompat
+                android:id="@+id/expressionLayout"
                 android:layout_width="0dp"
                 android:layout_height="fill_parent"
                 android:layout_weight="1"
-                android:background="?android:textColorSecondary"
                 android:orientation="vertical"
                 android:paddingTop="10dp"
-                android:elevation="10dp"
+                android:elevation="4dp"
                 tools:ignore="UnusedAttribute">
 
 
@@ -338,7 +342,7 @@
                     android:layout_height="0dp"
                     android:layout_weight="1"
                     android:background="@drawable/ripple"
-                    android:text="@string/clear"
+                    android:text="@string/delete"
                     android:textStyle="bold"
                     android:textSize="24sp" />
 
@@ -392,6 +396,36 @@
 
 
     </android.support.v7.widget.LinearLayoutCompat>
+
+    <!--settings top bar overlay-->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:layout_marginStart="10dp"
+        android:background="@color/transparent"
+        android:orientation="horizontal"
+        android:layout_gravity="center"
+        android:gravity="center|start">
+
+        <android.support.v7.widget.AppCompatButton
+            android:id="@+id/bMode"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/infix"
+            android:textSize="20sp"
+            android:textColor="@color/red"
+            style="?android:attr/borderlessButtonStyle"/>
+
+        <android.support.v7.widget.AppCompatImageButton
+            android:id="@+id/bTheme"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="?selectableItemBackgroundBorderless"
+            android:src="@drawable/palette"
+            android:tint="?android:textColor"
+            android:visibility="visible" />
+    </LinearLayout>
 
 
 </RelativeLayout>

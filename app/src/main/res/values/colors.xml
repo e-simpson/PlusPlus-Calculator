@@ -4,15 +4,18 @@
     <color name="colorAccent">#147dff</color>
     <color name="colorAccentLight">#bd147dff</color>
     <color name="colorAccentLighter">#91147dff</color>
+    <color name="colorAccentDark">#212B3A</color>
 
     <!--theme colours-->
     <color name="black">#000000</color>
     <color name="white">#ffffff</color>
+    <color name="custom">#212B3A</color>
 
     <!--ui colours-->
     <color name="red">#f9373a</color>
     <color name="green">#b605f177</color>
     <color name="blue">#378ef9</color>
+    <color name="grey">#fafafa</color>
 
     <!--transparent modifying colours-->
     <color name="transparent">#00000000</color>

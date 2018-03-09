@@ -21,4 +21,8 @@
     <string name="add">+</string>
     <string name="equals">=</string>
     <string name="enter">ENTER</string>
+    <string name="delete">DEL</string>
+    <string name="division_by_zero">÷0 has no meaning</string>
+    <string name="lenny">( ͡° ͜ʖ ͡°)</string>
+    <string name="save">SAVE</string>
 </resources>

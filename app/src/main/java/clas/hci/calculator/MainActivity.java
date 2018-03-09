@@ -1,28 +1,39 @@
 package clas.hci.calculator;
 
 import android.app.ActivityManager;
+import android.arch.persistence.room.Room;
 import android.content.SharedPreferences;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.ColorFilter;
+import android.graphics.LightingColorFilter;
+import android.graphics.drawable.Drawable;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.preference.PreferenceManager;
-import android.support.v4.graphics.ColorUtils;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.AppCompatButton;
+import android.support.v7.widget.LinearLayoutCompat;
+import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.HorizontalScrollView;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
 import com.pes.androidmaterialcolorpickerdialog.ColorPicker;
 import com.pes.androidmaterialcolorpickerdialog.ColorPickerCallback;
 
+import java.lang.ref.WeakReference;
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Objects;
 import java.util.Stack;
 
@@ -34,9 +45,9 @@ import butterknife.OnLongClick;
 public class MainActivity extends AppCompatActivity {
 //    MAIN VIEW BINDING----------------------------------------------
     @BindView(R.id.bMode) AppCompatButton modeButton;
-    @BindView(R.id.expressionScroll) ScrollView expressionScroll;
+    @BindView(R.id.historyScroll) ScrollView historyScroll;
+    @BindView(R.id.historyLayout) LinearLayoutCompat historyLayout;
     @BindView(R.id.expression) TextView expressionDisplay;
-    @BindView(R.id.preExpression) TextView preExpressionDisplay;
     @BindView(R.id.inputScroll) HorizontalScrollView inputScroll;
     @BindView(R.id.input) TextView inputDisplay;
     @BindView(R.id.bEqual) AppCompatButton equalButton;
@@ -44,32 +55,136 @@ public class MainActivity extends AppCompatActivity {
     @BindView(R.id.bMulti) AppCompatButton multiplyButton;
     @BindView(R.id.bSubtract) AppCompatButton subtractButton;
     @BindView(R.id.bAdd) AppCompatButton addButton;
+    @BindView(R.id.bClear) AppCompatButton clearButton;
     @BindView(R.id.bTheme) ImageButton themeButton;
 
 
 
-//    CUSTOM ENUMS----------------------------------------------
+    //    CUSTOM ENUMS----------------------------------------------
     private enum THEME {BLACK, WHITE, CUSTOM}
     private enum OPERATOR {NONE, DIVIDE, MULTIPLY, SUBTRACT, ADD}
+    private enum RIPPLE {RED, ACCENT, GREEN}
     private enum MODE {RPN, INFIX}
 
 
 
 //    MAIN VARIABLES----------------------------------------------
-    MODE mode = MODE.INFIX;
-    Stack<BigDecimal> rpnNumberStack = new Stack<>();
+    private MODE mode = MODE.INFIX;
+    private Stack<BigDecimal> rpnNumberStack = new Stack<>();
 
-    BigDecimal oldA = null;
-    BigDecimal result = null;
-    BigDecimal numberA = null;
-    BigDecimal numberB = null;
+    private BigDecimal oldA = null;
+    private BigDecimal result = null;
+    private BigDecimal numberA = null;
+    private BigDecimal numberB = null;
+    private OPERATOR currentOperator = OPERATOR.NONE;
+    private String currentInput = "0";
 
-    String currentInput = "0";
-    OPERATOR currentOperator = OPERATOR.NONE;
+    private CalculationDatabase db;
+
+
+//    DB HELPER FUNCTIONS
+    private static class calculationsGetter extends AsyncTask<Void, Void, List> {
+        private WeakReference<MainActivity> activityReference;
+        calculationsGetter(MainActivity context) {activityReference = new WeakReference<>(context);}
+        @Override protected List doInBackground(Void... params) {return activityReference.get().db.dao().getAll();}
+        @Override protected void onPostExecute(List result) {activityReference.get().updateHistory(result);}
+    }
+
+    private static class calculationPoster extends AsyncTask<Void, Void, String> {
+        private WeakReference<MainActivity> activityReference;
+        String expression = "";
+        double result = 0;
+
+        long epoch = 0;
+
+        calculationPoster(MainActivity context, final String expression, final double result, final long epoch) {
+            this.expression = expression;
+            this.result = result;
+            this.epoch = epoch;
+            activityReference = new WeakReference<>(context);
+        }
+
+        @Override protected String doInBackground(Void... params) {
+            Calculation newCalculation = new Calculation(expression, result, epoch);
+            activityReference.get().db.dao().insertCalculation(newCalculation);
+            return "task finished";
+        }
+        @Override protected void onPostExecute(String result) {
+            new calculationsGetter(activityReference.get()).execute();
+//            activityReference.get().historyDisplay.append("\n" + expression + " = " + result);
+
+        }
+    }
+
+    private void updateHistory(List calculations){
+        for (int i = 0; i < calculations.size() ; i++) {
+            Calculation c = (Calculation)calculations.get(i);
+//            historyDisplay.append("\n" + c.getExpression());
+            addCalculationToScroll(c);
+        }
+        historyScroll.post(new Runnable() {@Override public void run() { historyScroll.fullScroll(View.FOCUS_DOWN); }});
+    }
+
+    private void addCalculationToScroll(Calculation calculation){
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.HORIZONTAL);
+        layout.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
+
+//        TextView time = new TextView(this);
+//        time.setTextColor(getResources().getColor(R.color.custom));
+//        time.setTextSize(12);
+//        Date date = new Date(calculation.getUtc());
+//        @SuppressLint("SimpleDateFormat") SimpleDateFormat formatter = new SimpleDateFormat("EEE, MMM d" );
+//        formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
+//        time.setText(formatter.format(date));
+//        time.setGravity(Gravity.CENTER);
+//        time.setTextAlignment(View.TEXT_ALIGNMENT_TEXT_END);
+//        time.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+//        chat.addView(time);
+
+        final LinearLayout calculationBubble = new LinearLayout(this);
+        calculationBubble.setBackground((getResources().getDrawable(R.drawable.calculation_bubble)));
+        calculationBubble.setPadding(40,10,40,10);
+        calculationBubble.setOrientation(LinearLayout.VERTICAL);
+        calculationBubble.setGravity(Gravity.END);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {calculationBubble.setElevation(10);}
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        params.setMargins(40, 20, 0, 20);
+        calculationBubble.setLayoutParams(params);
+        layout.addView(calculationBubble);
+
+
+        TextView words = new TextView(this);
+        words.setTextColor(getResources().getColor(R.color.colorAccentLighter));
+        words.setTextSize(20);
+        words.setText(calculation.getExpression());
+        words.setGravity(Gravity.CENTER_VERTICAL);
+        words.setTextAlignment(View.TEXT_ALIGNMENT_TEXT_END);
+        words.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        calculationBubble.addView(words);
 
 
 
-//    UPDATE FUNCTIONS-----------------------------------------
+//        calculationBubble.setClickable(true);
+//        calculationBubble.setOnClickListener(new View.OnClickListener() {
+//            @Override public void onClick(View view) {}
+//        });
+
+//        if (!startAnimationComplete){
+//        TranslateAnimation translate = new TranslateAnimation(0, 0, 200, 0);
+//        translate.setFillAfter(true);
+//        translate.setDuration(800);
+//        chat.startAnimation(translate);
+
+        new Handler().post(new Runnable() {@Override public void run() {historyScroll.fullScroll(View.FOCUS_DOWN);}});
+//        }
+
+        historyLayout.addView(layout);
+    }
+
+
+
+    //    HELPER FUNCTIONS-----------------------------------------
     private String getOperationCharacter(){
         if (currentOperator == OPERATOR.DIVIDE) {return getResources().getString(R.string.divide);}
         else if (currentOperator == OPERATOR.MULTIPLY) {return getResources().getString(R.string.multiply);}
@@ -79,54 +194,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private String formatBigDecimal(BigDecimal num){
-        String s = num.toString();
-        s = !s.contains(".") ? s : s.replaceAll("0*$", "").replaceAll("\\.$", "");
-        return s;
+//        String s = num.toString();
+//        s = !s.contains(".") ? s : s.replaceAll("0*$", "").replaceAll("\\.$", "");
+        return num.stripTrailingZeros().toString();
     }
 
-    private void updateDisplay(){
-        if (mode == MODE.RPN) {
-            modeButton.setText(R.string.rpn);
-            equalButton.setText(R.string.enter);
-            equalButton.setTextSize(25);
-        }
-        else {
-            modeButton.setText(R.string.infix);
-            equalButton.setText(getResources().getString(R.string.equals));
-            equalButton.setTextSize(50);
-        }
-
-        String expression = "";
-        if (oldA != null) {expression = expression.concat(formatBigDecimal(oldA));}
-        expression = expression.concat(" " + getOperationCharacter());
-        if (numberB != null) {expression = expression.concat(" " + formatBigDecimal(numberB));}
-        if (result != null) {expression = expression.concat(" = ");}
-        if (mode == MODE.INFIX) {preExpressionDisplay.setText((expression));}
-//        if (result != null) {expression = expression.concat(formatBigDecimal(result));}
-//        result = null;
-
-//        if (mode == MODE.INFIX){
-//            if (expression.contains("=")) {
-//                expressionDisplay.append("\n" + expression);
-//            }
-//        }
-        if (mode == MODE.RPN){
-            preExpressionDisplay.setText("");
-            for (int i = 0; i < rpnNumberStack.size(); i++) {
-                if (i > 0) {preExpressionDisplay.append(",  ");}
-                preExpressionDisplay.append(formatBigDecimal(rpnNumberStack.get(i)));
-            }
-        }
-
-        inputDisplay.setText(currentInput);
-
-        inputScroll.post(new Runnable() {
-            @Override public void run() { inputScroll.fullScroll(View.FOCUS_RIGHT); }
-        });
-
-        expressionScroll.post(new Runnable() {
-            @Override public void run() { expressionScroll.fullScroll(View.FOCUS_DOWN); }
-        });
+    private boolean checkIfClearNeeded(){
+        return result != null && numberB != null && numberA != null && currentOperator != OPERATOR.NONE;
     }
 
     private void clearAllVariables(){
@@ -151,7 +225,6 @@ public class MainActivity extends AppCompatActivity {
 
     private BigDecimal calculateResult(BigDecimal a, BigDecimal b, OPERATOR operator){
         BigDecimal res = null;
-
         switch(operator){
             case DIVIDE:
                 res = a.divide(b, 9, BigDecimal.ROUND_HALF_UP); break;
@@ -163,11 +236,86 @@ public class MainActivity extends AppCompatActivity {
                 res = a.add(b); break;
         }
 
-        (findViewById(R.id.inputScroll)).setBackground(getResources().getDrawable(R.drawable.input_ripple_green));
-        (findViewById(R.id.inputScroll)).getBackground().setState(new int[] { android.R.attr.state_pressed, android.R.attr.state_enabled });
-        (findViewById(R.id.inputScroll)).getBackground().setState(new int[] {  });
+        assert res != null;
 
+        String expression = formatBigDecimal(a) + " " + getOperationCharacter()  + " "  + formatBigDecimal(b) + " = " + formatBigDecimal(res);
+        new calculationPoster(this, expression, res.doubleValue(), System.currentTimeMillis()).execute();
+        rippleInput(RIPPLE.GREEN);
         return res;
+    }
+
+
+
+    //    UI FUNCTIONS-----------------------------------------
+    private void rippleInput(RIPPLE rippleType){
+        switch(rippleType){
+            case RED:
+                inputScroll.setBackground(getResources().getDrawable(R.drawable.input_ripple_red));
+                inputScroll.getBackground().setState(new int[] { android.R.attr.state_pressed, android.R.attr.state_enabled });
+                inputScroll.getBackground().setState(new int[] {  });
+                break;
+            case GREEN:
+                inputScroll.setBackground(getResources().getDrawable(R.drawable.input_ripple_green));
+                inputScroll.getBackground().setState(new int[] { android.R.attr.state_pressed, android.R.attr.state_enabled });
+                inputScroll.getBackground().setState(new int[] {  });
+                break;
+            case ACCENT:
+                inputScroll.setBackground(getResources().getDrawable(R.drawable.input_ripple));
+                inputScroll.getBackground().setState(new int[] { android.R.attr.state_pressed, android.R.attr.state_enabled });
+                inputScroll.getBackground().setState(new int[] {  });
+                break;
+        }
+
+    }
+
+    private void setInputColour(RIPPLE rippleType){
+        switch(rippleType){
+            case RED:
+                inputDisplay.setTextColor(getResources().getColor(R.color.red));
+                expressionDisplay.setTextColor(getResources().getColor(R.color.red));
+                break;
+            case ACCENT:
+                inputDisplay.setTextColor(getResources().getColor(R.color.colorAccent));
+                expressionDisplay.setTextColor(getResources().getColor(R.color.colorAccentLight));
+                break;
+        }
+
+    }
+
+    private void updateDisplay(){
+        if (mode == MODE.RPN) {
+            modeButton.setText(R.string.rpn);
+            equalButton.setText(R.string.enter);
+            equalButton.setTextSize(25);
+        }
+        else {
+            modeButton.setText(R.string.infix);
+            equalButton.setText(getResources().getString(R.string.equals));
+            equalButton.setTextSize(50);
+        }
+
+        String expression = "";
+        if (oldA != null) {expression = expression.concat(formatBigDecimal(oldA));}
+        expression = expression.concat(" " + getOperationCharacter());
+        if (numberB != null) {expression = expression.concat(" " + formatBigDecimal(numberB));}
+        if (result != null) {expression = expression.concat(" = ");}
+        if (mode == MODE.INFIX) {expressionDisplay.setText((expression));}
+
+        if (mode == MODE.RPN){
+            expressionDisplay.setText("");
+            for (int i = 0; i < rpnNumberStack.size(); i++) {
+                if (i > 0) {
+                    expressionDisplay.append(",  ");}
+                expressionDisplay.append(formatBigDecimal(rpnNumberStack.get(i)));
+            }
+        }
+
+        if (checkIfClearNeeded()) {clearButton.setText(R.string.clear);} else {clearButton.setText(R.string.delete);}
+        inputDisplay.setText(currentInput);
+        setInputColour(RIPPLE.ACCENT);
+        inputScroll.post(new Runnable() {
+            @Override public void run() { inputScroll.fullScroll(View.FOCUS_RIGHT); }
+        });
     }
 
 
@@ -175,6 +323,7 @@ public class MainActivity extends AppCompatActivity {
 //    BUTTON FUNCTIONS----------------------------------------------
 
 //    change mode button
+    /*
     @OnClick(R.id.bMode) void changeModeButtonPress() {
         if (mode == MODE.RPN) {mode = MODE.INFIX;}
         else {mode = MODE.RPN;}
@@ -182,24 +331,40 @@ public class MainActivity extends AppCompatActivity {
         clearAllVariables();
         updateDisplay();
 
-        (findViewById(R.id.inputScroll)).setBackground(getResources().getDrawable(R.drawable.input_ripple_red));
-        (findViewById(R.id.inputScroll)).getBackground().setState(new int[] { android.R.attr.state_pressed, android.R.attr.state_enabled });
-        (findViewById(R.id.inputScroll)).getBackground().setState(new int[] {  });
+        rippleInput(RIPPLE.red);
     }
+    */
 
 //    clear button
     @OnClick(R.id.bClear) void clearButtonPress() {
+        if (checkIfClearNeeded()){
+            clearButtonLongPress();
+        }
+        else{
+            currentInput = currentInput.substring(0, currentInput.length()-1);
+            if (Objects.equals(currentInput, "")){currentInput = "0";}
+            updateDisplay();
+        }
+    }
+    @OnLongClick(R.id.bClear) boolean clearButtonLongPress() {
         clearAllVariables();
         updateDisplay();
-
-        (findViewById(R.id.inputScroll)).setBackground(getResources().getDrawable(R.drawable.input_ripple));
-        (findViewById(R.id.inputScroll)).getBackground().setState(new int[] { android.R.attr.state_pressed, android.R.attr.state_enabled });
-        (findViewById(R.id.inputScroll)).getBackground().setState(new int[] {  });
+        rippleInput(RIPPLE.ACCENT);
+        return true;
     }
 
 //    equal button
     @OnClick(R.id.bEqual) void equalButtonPress() {
         if (mode == MODE.INFIX && numberA != null && numberB != null && !currentInput.isEmpty() && currentOperator != OPERATOR.NONE) {
+            if (numberB.compareTo(BigDecimal.ZERO) == 0 && currentOperator == OPERATOR.DIVIDE){
+                clearButton.setText(R.string.clear);
+                expressionDisplay.setText(R.string.division_by_zero);
+                inputDisplay.setText(R.string.lenny);
+                result = BigDecimal.ZERO;
+                rippleInput(RIPPLE.RED);
+                setInputColour(RIPPLE.RED);
+                return;
+            }
             oldA = numberA;
             result = calculateResult(numberA, numberB, currentOperator);
             numberA = result;
@@ -269,8 +434,8 @@ public class MainActivity extends AppCompatActivity {
     @OnClick(R.id.b8) void press8() {pressNumber(8);}
     @OnClick(R.id.b9) void press9() {pressNumber(9);}
     private void pressNumber(int number){
-        if (result != null && numberB != null && numberA != null && currentOperator != OPERATOR.NONE){
-            clearButtonPress();
+        if (checkIfClearNeeded()){
+            clearButtonLongPress();
         }
 
         if (Objects.equals(currentInput, "0")) {currentInput = "";}
@@ -287,8 +452,8 @@ public class MainActivity extends AppCompatActivity {
 
 //    decimal button
     @OnClick(R.id.bDecimal) void decimalButtonPress() {
-        if (result != null && numberB != null && numberA != null && currentOperator != OPERATOR.NONE){
-            clearButtonPress();
+        if (checkIfClearNeeded()){
+            clearButtonLongPress();
         }
 
         if (mode == MODE.INFIX && numberA != null && currentOperator != OPERATOR.NONE && numberB == null){currentInput = "0";}
@@ -306,13 +471,16 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-
 //    MAIN OVERRIDES FUNCTION------------------------------------------------
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         applyTheme();
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
+
+        db = Room.databaseBuilder(getApplicationContext(), CalculationDatabase.class, "calculations.db").fallbackToDestructiveMigration().build();
+        new calculationsGetter(this).execute();
+
         updateDisplay();
         checkSetCustomTheme();
 
@@ -323,26 +491,25 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-
 //    THEME SYSTEM-----------------------------------------------------------
-    private void setLightSystemBars(boolean light){
-        if (light){
-            View someView = findViewById(R.id.layout);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                someView.setSystemUiVisibility(someView.getSystemUiVisibility() | View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+    private void setLightSystemBars(boolean status, boolean navigation){
+        View view = findViewById(R.id.layout);
+        if (status && !navigation && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
+            view.setSystemUiVisibility(view.getSystemUiVisibility() | View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+        }
+        else if (!status && navigation && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
+            view.setSystemUiVisibility(view.getSystemUiVisibility() | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
+        }
+        else if (status && navigation){
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                view.setSystemUiVisibility(view.getSystemUiVisibility() | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
             }
-            if (Build.VERSION.SDK_INT >= 27) {
-                someView.setSystemUiVisibility(someView.getSystemUiVisibility() | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                view.setSystemUiVisibility(view.getSystemUiVisibility() | View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
             }
         }
-        else{
-            View someView = findViewById(R.id.layout);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                someView.setSystemUiVisibility(someView.getSystemUiVisibility());
-            }
-            if (Build.VERSION.SDK_INT >= 27) {
-                someView.setSystemUiVisibility(someView.getSystemUiVisibility());
-            }
+        else {
+            view.setSystemUiVisibility(view.getSystemUiVisibility());
         }
     }
 
@@ -354,40 +521,51 @@ public class MainActivity extends AppCompatActivity {
         return Color.rgb((int) r, (int) g, (int) b);
     }
 
-    private void checkSetCustomTheme(){
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
-        int themeID = preferences.getInt("THEME", THEME.BLACK.ordinal());
-        int resultColor = getResources().getColor(R.color.black);
-        if (themeID == THEME.BLACK.ordinal()){
-            setLightSystemBars(false);
-            resultColor = mixColors(getResources().getColor(R.color.black), getResources().getColor(R.color.transLighter), 0.62F);
-        }
-        else if (themeID == THEME.WHITE.ordinal()){
-            setLightSystemBars(true);
-            resultColor = mixColors(getResources().getColor(R.color.white), getResources().getColor(R.color.transDarker), 0.91F);
-        }
-        else if (themeID == THEME.CUSTOM.ordinal()){
-            int color = preferences.getInt("CUSTOM", R.color.black);
-            findViewById(R.id.layout).setBackgroundColor(color);
-            double darkness = 1-(0.299*Color.red(color) + 0.587*Color.green(color) + 0.114*Color.blue(color))/255;
-            if(darkness<0.5){
-                setLightSystemBars(true);
-                resultColor = mixColors(color, getResources().getColor(R.color.transDarker), 0.91F);
-            }
-            else{
-                setLightSystemBars(false);
-                resultColor = mixColors(color, getResources().getColor(R.color.transLighter), 0.65F);
-            }
-        }
-        setTaskDescription(resultColor);
-    }
-
     private void setTaskDescription(int color){
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             String title = getString(R.string.app_name);
             Bitmap icon = BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher_round);
             setTaskDescription(new ActivityManager.TaskDescription(title, icon, color));
         }
+    }
+
+    private void checkSetCustomTheme(){
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
+        int themeID = preferences.getInt("THEME", THEME.BLACK.ordinal());
+        int inputColour = getResources().getColor(R.color.black);
+        int expressionColour = getResources().getColor(R.color.black);
+        if (themeID == THEME.BLACK.ordinal()){
+            setLightSystemBars(false, false);
+            inputColour = mixColors(getResources().getColor(R.color.black), getResources().getColor(R.color.white), 0.8F);
+            expressionColour = mixColors(getResources().getColor(R.color.black), getResources().getColor(R.color.white), 0.9F);
+        }
+        else if (themeID == THEME.WHITE.ordinal()){
+            setLightSystemBars(true, true);
+            inputColour = mixColors(getResources().getColor(R.color.white), getResources().getColor(R.color.black), 0.97F);
+            expressionColour = mixColors(getResources().getColor(R.color.white), getResources().getColor(R.color.black), 0.98F);
+        }
+        else if (themeID == THEME.CUSTOM.ordinal()){
+            int color = preferences.getInt("CUSTOM", R.color.custom);
+            findViewById(R.id.layout).setBackgroundColor(color);
+            double darkness = 1-(0.299*Color.red(color) + 0.587*Color.green(color) + 0.114*Color.blue(color))/255;
+            if(darkness<0.5){
+                setLightSystemBars(false, true);
+                inputColour = mixColors(color, getResources().getColor(R.color.black), 0.2F);
+                expressionColour = mixColors(color, getResources().getColor(R.color.black), 0.9F);
+            }
+            else{
+                setLightSystemBars(true, false);
+                inputColour = mixColors(color, getResources().getColor(R.color.white), 0.2F);
+                expressionColour = mixColors(color, getResources().getColor(R.color.white), 0.95F);
+            }
+            Drawable myIcon = getResources().getDrawable( R.drawable.palette );
+            ColorFilter filter = new LightingColorFilter( expressionColour, expressionColour);
+            myIcon.setColorFilter(filter);
+            themeButton.setImageDrawable(myIcon);
+        }
+        setTaskDescription(inputColour);
+        findViewById(R.id.inputLayout).setBackgroundColor(inputColour);
+        findViewById(R.id.expressionLayout).setBackgroundColor(expressionColour);
     }
 
     @OnClick(R.id.bTheme) void toggleTheme(){
@@ -398,10 +576,10 @@ public class MainActivity extends AppCompatActivity {
             preferences.edit().putInt("THEME", THEME.WHITE.ordinal()).apply();
         }
         else if (themeID == THEME.WHITE.ordinal()){
-            if (preferences.getInt("CUSTOM", THEME.BLACK.ordinal()) != R.color.black){
+//            if (preferences.getInt("CUSTOM", THEME.BLACK.ordinal()) != R.color.black){
                 preferences.edit().putInt("THEME", THEME.CUSTOM.ordinal()).apply();
-            }
-            else {preferences.edit().putInt("THEME", THEME.BLACK.ordinal()).apply();}
+//            }
+//            else {preferences.edit().putInt("THEME", THEME.BLACK.ordinal()).apply();}
         }
         else if (themeID == THEME.CUSTOM.ordinal()){
             preferences.edit().putInt("THEME", THEME.BLACK.ordinal()).apply();
@@ -440,6 +618,5 @@ public class MainActivity extends AppCompatActivity {
             else{super.setTheme(R.style.BlackAppTheme);}
         }
     }
-
 
 }
